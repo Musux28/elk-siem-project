@@ -8,13 +8,20 @@
 
 ## Table of Contents
 
-- [Project Overview](#project-overview)
-- [Project Relevance](#project-relevance)
-- [Methodology](#methodology)
-- [Attack Scenarios and Results](#attack-scenarios-and-results)
-- [Conclusion](#conclusion)
-- [Team Contributions](#team-contributions)
-- [References](#references)
+1. [Project Overview](#project-overview)
+2. [Project Relevance](#project-relevance)
+3. [Methodology](#methodology)
+   - [Lab Architecture](#lab-architecture)
+   - [Tools & Technologies](#tools--technologies)
+   - [Environment Setup](#environment-setup)
+   - [Step-by-Step Process](#step-by-step-process)
+4. [Attack Scenarios and Results](#attack-scenarios-and-results)
+   - [Scenario 1 — SSH Brute Force](#scenario-1--ssh-brute-force-linux)
+   - [Scenario 2 — RDP Brute Force](#scenario-2--rdp-brute-force-windows)
+   - [Scenario 3 — File Integrity Monitoring](#scenario-3--file-integrity-monitoring)
+5. [Conclusion](#conclusion)
+6. [Team Contributions](#team-contributions)
+7. [References](#references)
 
 ---
 
@@ -23,15 +30,15 @@
 This project implements a fully functional **Security Information and Event Management (SIEM)** system using the **Elastic Stack (ELK)** deployed in a virtual lab environment. The system monitors, detects, and investigates security incidents across multiple endpoints in real time.
 
 The lab simulates a small corporate network composed of:
-- An **Ubuntu server** running the full ELK Stack (Elasticsearch, Logstash, Kibana) with Fleet management
-- A **Windows Server 2022** endpoint with Elastic Agent and Sysmon
-- A **Linux (Ubuntu)** endpoint with Elastic Agent and Auditd
-- A **Kali Linux** attacker machine used to simulate real-world attacks
+
+- An **Ubuntu 24.04 server** running the full ELK Stack (Elasticsearch 8.13.0, Kibana 8.13.0) with Fleet Server management
+- A **Windows Server 2022** endpoint with Elastic Agent 8.13.4, Windows Security integration, and File Integrity Monitoring
 
 Three attack scenarios are simulated and investigated:
-1. **SSH Brute Force** on Linux using Hydra
-2. **RDP Brute Force** on Windows using Hydra
-3. **Unauthorized File Modification** monitored via Auditd
+
+1. **SSH Brute Force** on Linux using Hydra → **14 alerts triggered** ✅
+2. **RDP Brute Force** on Windows using Hydra → logs collected, detection documented ✅
+3. **Unauthorized File Deletion** monitored via Elastic FIM → logs collected, detection documented ✅
 
 ---
 
@@ -52,10 +59,12 @@ In modern cybersecurity operations, the ability to **detect, analyze, and respon
 | **Post-Incident Activity** | Review collected logs, improve detection rules |
 
 ### Key Skills Developed
-- Real-time log ingestion and correlation
+
+- Real-time log ingestion and correlation across heterogeneous endpoints
 - Threat hunting with KQL (Kibana Query Language)
-- Endpoint telemetry collection (Sysmon, Auditd)
-- Attack simulation and detection validation
+- Endpoint telemetry collection (Windows Security logs, Elastic FIM)
+- Custom detection rule creation and validation
+- Attack simulation and detection pipeline verification
 
 ---
 
@@ -65,92 +74,101 @@ In modern cybersecurity operations, the ability to **detect, analyze, and respon
 
 ```
 +----------------------------------------------------------+
-|                   Virtual Lab Network                    |
-|                (Host-Only: 192.168.56.0/24)              |
+|              Virtual Lab Network (VirtualBox)            |
+|              Host-Only Adapter: 192.168.56.0/24          |
 |                                                          |
-|  +-------------------+       +----------------------+   |
-|  |  Ubuntu Server    |       |  Windows Server 2022 |   |
-|  |  ELK Stack        |<----->|  Elastic Agent       |   |
-|  |  + Fleet Server   |       |  + Sysmon            |   |
-|  |  192.168.56.10    |       |  192.168.56.20       |   |
-|  +-------------------+       +----------------------+   |
-|           ^                                              |
-|           |          +------------------------+         |
-|           +--------->|  Ubuntu Linux Agent    |         |
-|                      |  Elastic Agent         |         |
-|                      |  + Auditd              |         |
-|                      |  192.168.56.30         |         |
-|                      +------------------------+         |
-|                               ^                         |
-|                      +--------+----------+              |
-|                      |  Kali Linux       |              |
-|                      |  Attacker Machine |              |
-|                      |  + Hydra          |              |
-|                      |  192.168.56.40    |              |
-|                      +-------------------+              |
+|  +----------------------------+                          |
+|  |   ELK Server               |                         |
+|  |   Ubuntu 24.04 LTS         |                         |
+|  |   IP: 192.168.56.101       |                         |
+|  |                            |                         |
+|  |   Elasticsearch  :9200     |                         |
+|  |   Kibana         :5601     |<────────────────────┐   |
+|  |   Fleet Server   :8220     |                     │   |
+|  |   Elastic Agent (Fleet)    |                     │   |
+|  |   Attack tools: Hydra      |                     │   |
+|  +----------------------------+                     │   |
+|                                                     │   |
+|  +----------------------------+                     │   |
+|  |   Windows Server 2022      |                     │   |
+|  |   IP: 192.168.56.102       |─────────────────────┘   |
+|  |                            |                          |
+|  |   Elastic Agent 8.13.4     |                          |
+|  |   Windows Security Logs    |                          |
+|  |   File Integrity Monitor   |                          |
+|  +----------------------------+                          |
 +----------------------------------------------------------+
 ```
 
-### Tools and Technologies
+### Tools & Technologies
 
 | Tool | Version | Role |
 |---|---|---|
-| **Elasticsearch** | 8.x | Log storage, indexing, search |
-| **Logstash** | 8.x | Data collection and processing pipeline |
-| **Kibana** | 8.x | Visualization, dashboards, investigation |
-| **Elastic Agent + Fleet** | 8.x | Centralized endpoint log collection |
-| **Sysmon** | Latest | Windows telemetry (process, network, file) |
-| **Auditd** | Latest | Linux file integrity and activity monitoring |
-| **Hydra** | Latest | Attack simulation (SSH and RDP brute force) |
-| **VirtualBox** | 7.x | Virtualization platform |
+| **Elasticsearch** | 8.13.0 | Log storage, indexing, search engine |
+| **Kibana** | 8.13.0 | Visualization, dashboards, SIEM interface |
+| **Elastic Fleet** | 8.13.0 | Centralized agent management |
+| **Elastic Agent** | 8.13.4 | Endpoint log collection (Windows) |
+| **Windows Security Integration** | — | Windows Event Logs (Event ID 4625) |
+| **Elastic FIM** | — | File integrity and deletion monitoring |
+| **Hydra** | 9.5 | Attack simulation (SSH and RDP brute force) |
+| **VirtualBox** | — | Virtualization platform (macOS host) |
 
 ### Environment Setup
 
-#### Virtual Machines
+| VM | OS | IP | RAM | Role |
+|---|---|---|---|---|
+| ELK Server | Ubuntu 24.04 LTS | 192.168.56.101 | 6 GB | Elasticsearch + Kibana + Fleet Server |
+| Windows Target | Windows Server 2022 | 192.168.56.102 | 4 GB | Elastic Agent + Windows logs + FIM |
 
-| VM | OS | RAM | Role |
-|---|---|---|---|
-| ELK Server | Ubuntu 22.04 | 4 GB | Elasticsearch + Logstash + Kibana + Fleet |
-| Windows Agent | Windows Server 2022 | 4 GB | Elastic Agent + Sysmon |
-| Linux Agent | Ubuntu 22.04 | 2 GB | Elastic Agent + Auditd |
-| Attacker | Kali Linux | 2 GB | Hydra attack simulation |
+**Network:** Host-Only adapter isolates lab from host network. NAT adapter provides internet access on the ELK server only.
 
-#### Network Configuration
-All VMs are connected on a **Host-Only network** (192.168.56.0/24) to isolate the lab environment from the host machine network.
+---
 
 ### Step-by-Step Process
 
-#### Phase 1 — ELK Stack Installation (Ubuntu Server)
-1. Update system and install Java
-2. Add Elastic repository and install Elasticsearch, Logstash, Kibana
-3. Configure remote access (`network.host: 0.0.0.0`) and open ports 9200 and 5601
-4. Generate enrollment token and encryption keys
-5. Access Kibana dashboard and complete setup
+#### Phase 1 — ELK Stack Installation
 
-See screenshots: `docs/screenshots/01-elk-setup/`
+1. Installed Elasticsearch 8.13.0 and Kibana 8.13.0 on Ubuntu 24.04
+2. Configured SSL/TLS certificates for secure HTTPS communication on port 9200
+3. Set `network.host: 0.0.0.0` and `http.host: 0.0.0.0` for remote access
+4. Verified cluster health: `status: green`
 
-#### Phase 2 — Fleet Server Setup
-1. Add Fleet Server from Kibana Management > Fleet
-2. Deploy Elastic Agent on Ubuntu server as Fleet Server
-3. Verify Fleet Server connection on dashboard
+See: `docs/screenshots/phase1/`
 
-See screenshots: `docs/screenshots/02-fleet-server/`
+#### Phase 2 — Fleet Server & Agent Enrollment
 
-#### Phase 3 — Windows Agent Onboarding
-1. Create agent policy in Fleet for Windows endpoint
-2. Install Elastic Agent via PowerShell on Windows Server
-3. Add Windows integration with Sysmon Operational log channel enabled
-4. Verify agent health in Fleet dashboard
+1. Deployed Fleet Server on port 8220 with service token authentication
+2. Enrolled Ubuntu Linux agent (ELK Server itself) as Fleet-managed
+3. Transferred Elastic Agent installer to Windows VM via Python HTTP server:
+   ```bash
+   python3 -m http.server 8888
+   ```
+4. Installed Elastic Agent on Windows Server via PowerShell:
+   ```powershell
+   .\elastic-agent.exe install --url=https://192.168.56.101:8220 \
+     --enrollment-token=<TOKEN> --insecure
+   ```
+5. Verified both agents as **Healthy** in Fleet dashboard
 
-See screenshots: `docs/screenshots/03-windows-agent/`
+See: `docs/screenshots/phase2/`
 
-#### Phase 4 — Linux Agent Onboarding
-1. Create agent policy in Fleet for Linux endpoint
-2. Install and enroll Elastic Agent on Ubuntu Linux machine
-3. Install and configure Auditd with custom rules for `/etc/passwd` and `/etc/shadow`
-4. Verify agent health in Fleet dashboard
+#### Phase 3 — Detection Rules Creation
 
-See screenshots: `docs/screenshots/04-linux-agent/`
+Three custom detection rules were created in **Security → Detection Rules (SIEM)**:
+
+| Rule Name | Type | Query | Severity | Risk Score |
+|---|---|---|---|---|
+| SSH Brute Force Detection | Custom Query | `system.auth.ssh.event: "Failed"` | High | 73 |
+| RDP Failed Logins | Custom Query | `winlog.event_id: "4625"` | Medium | 47 |
+| File Integrity Monitoring | Custom Query | `event.dataset: "fim.event" AND event.action: deleted` | High | 73 |
+
+All rules: schedule every **5 minutes**, look-back **1 minute**.
+
+See: `docs/screenshots/phase3/`
+
+#### Phase 4 — Attack Simulation & Detection
+
+See full results in the [Attack Scenarios](#attack-scenarios-and-results) section below.
 
 ---
 
@@ -158,93 +176,134 @@ See screenshots: `docs/screenshots/04-linux-agent/`
 
 ### Scenario 1 — SSH Brute Force (Linux)
 
-**Objective:** Simulate a brute force attack on SSH and detect it in Kibana.
+**Objective:** Simulate a brute force attack on SSH and detect it via Kibana alerts.
 
-**Attack Command:**
+**Attack Setup:**
 ```bash
-hydra -l root -P password.txt <TARGET_IP> ssh
+cat << 'EOF' > /tmp/passwords.txt
+password
+123456
+admin
+root
+test
+letmein
+welcome
+monkey
+dragon
+master
+Pippobaudo
+password123
+qwerty
+abc123
+EOF
 ```
 
-**Detection Query (KQL):**
-```
-event.outcome: "failure" AND process.name: "sshd"
+**Attack Execution:**
+```bash
+hydra -l fakeuser -P /tmp/passwords.txt ssh://192.168.56.101 -t 4 -V
 ```
 
-> Screenshots and log evidence to be added after lab execution.
+**Result:** 14 failed SSH authentication attempts generated in `/var/log/auth.log`
 
-See screenshots: `docs/screenshots/05-ssh-bruteforce/`
+**Detection:** SSH Brute Force Detection rule fired **14 alerts** ✅
+
+- Rule: `SSH Brute Force Detection`
+- Severity: High | Risk Score: 73
+- Host: `elk-server` | User: `fakeuser` | Process: `sshd`
+
+**Evidence:**
+
+![SSH Attack Terminal](docs/screenshots/phase4/phase4_attack1_ssh_bruteforce.png)
+![SSH Alerts in Kibana](docs/screenshots/phase4/phase4_alert1_ssh_detected.png)
 
 ---
 
 ### Scenario 2 — RDP Brute Force (Windows)
 
-**Objective:** Simulate a brute force attack on RDP and detect it via Sysmon logs in Kibana.
+**Objective:** Simulate a brute force attack on Windows RDP and collect Event ID 4625 logs.
 
-**Attack Command:**
+**Attack Execution (from Ubuntu):**
 ```bash
-hydra -l administrator -P password.txt <TARGET_IP> rdp
+hydra -l Administrator -P /tmp/passwords.txt rdp://192.168.56.102 -t 1 -V
 ```
 
-**Detection Query (KQL):**
-```
-winlog.channel: "Microsoft-Windows-Sysmon/Operational" AND event.code: 3
-```
+**Result:** 14+ failed RDP login attempts sent to Windows Server
 
-> Screenshots and log evidence to be added after lab execution.
+**Log Collection:** **240+ documents** with `winlog.event_id: 4625` confirmed in Kibana Discover ✅
 
-See screenshots: `docs/screenshots/06-rdp-bruteforce/`
+- Dataset: `system.security` / `winlog.winlog`
+- Host: `WIN-QOQ15US7KTM`
+- Event action: `logon-failed`
+
+> **Note on Alert Generation:** The RDP Failed Logins detection rule executed successfully (all runs showed "Succeeded" in the Execution Log) but did not generate alerts. Investigation revealed an index pattern mismatch between the detection rule configuration and the data stream used by the Windows Security integration after re-enrollment. The raw event logs were fully confirmed in Elasticsearch via Kibana Discover.
+
+**Evidence:**
+
+![RDP Attack Terminal](docs/screenshots/phase4/phase4_attack2_rdp_bruteforce.png)
+![RDP Logs in Discover](docs/screenshots/phase4/phase4_discover_rdp_logs.png)
 
 ---
 
-### Scenario 3 — Unauthorized File Modification (Linux)
+### Scenario 3 — File Integrity Monitoring
 
-**Objective:** Detect unauthorized modification of `/etc/passwd` using Auditd.
+**Objective:** Detect unauthorized file deletion on Windows using Elastic FIM.
 
-**Auditd Rules:**
-```bash
--w /etc/passwd -p wa -k passwd_changes
--w /etc/shadow -p wa -k shadow_changes
+**FIM Configuration:** Elastic FIM integration added to Agent Policy 1, monitoring path: `C:\Users`
+
+**Attack Execution (Windows PowerShell):**
+```powershell
+New-Item -Path "C:\Users\test_delete.txt" -ItemType File -Value "test"
+Remove-Item -Path "C:\Users\test_delete.txt"
 ```
 
-**Simulated Attack:**
-```bash
-sudo echo "testuser:x:1001:1001::/home/testuser:/bin/bash" >> /etc/passwd
-```
+**Result:** File deletion event captured by Elastic FIM agent ✅
 
-**Detection Query (KQL):**
-```
-auditd.log.key: "passwd_changes"
-```
+- Dataset: `fim.event`
+- Event action: `deleted`
+- File path: `C:\Users\test_delete.txt`
+- Host: `WIN-QOQ15US7KTM`
 
-> Screenshots and log evidence to be added after lab execution.
+> **Note on Alert Generation:** The File Integrity Monitoring detection rule executed successfully with no errors, and the deletion events were confirmed in Kibana Discover with the correct field values (`event.dataset: fim.event`, `event.action: deleted`). The alert did not trigger due to a timing mismatch between rule execution cycles and event ingestion windows. The log collection pipeline was fully validated.
 
-See screenshots: `docs/screenshots/07-file-integrity/`
+**Evidence:**
+
+![File Deletion PowerShell](docs/screenshots/phase4/phase4_attack3_file_deletion.png)
+![FIM Logs in Discover](docs/screenshots/phase4/phase4_discover_fim_logs.png)
+
+---
+
+### Detection Rules Overview
+
+![Detection Rules List](docs/screenshots/phase4/phase4_rules_list.png)
+
+### Fleet Agents Status
+
+![Fleet Agents Healthy](docs/screenshots/phase4/phase4_fleet_agents.png)
 
 ---
 
 ## Conclusion
 
-### Key Insights
+This project successfully demonstrated the core workflow of a SIEM-based Incident Response pipeline using the Elastic Stack:
 
-This project demonstrated that the Elastic Stack provides a powerful, scalable, and cost-effective SIEM solution for real-time threat detection and incident investigation:
+**What Worked:**
+- Full ELK Stack deployment with SSL/TLS security and Fleet-managed agents
+- Elastic Agent enrollment on both Linux and Windows endpoints
+- SSH Brute Force detection fired correctly: **14 alerts confirmed end-to-end**
+- RDP and FIM log pipelines confirmed functional via Kibana Discover (240+ events ingested)
 
-- **Centralized visibility** across heterogeneous environments (Windows and Linux) is achievable with a single platform
-- **Brute force attacks** generate distinctive log patterns that are easily detectable with simple KQL queries
-- **File integrity monitoring** via Auditd provides granular visibility into sensitive system file changes
-- **Fleet management** simplifies agent deployment and policy enforcement at scale
+**Key Lessons Learned:**
+- Index pattern alignment between detection rules and data stream naming conventions is critical — a mismatch silently prevents alert generation even when logs are present
+- Translog corruption in Elasticsearch occurs after unclean VM shutdowns — proper Save State procedures are essential
+- Fleet Agent re-enrollment after a data wipe requires a new service token and certificate fingerprint
+- A single-node cluster requires `number_of_replicas: 0` on all indices to maintain green cluster health
 
-### Lessons Learned
-
-- Proper network segmentation is essential even in a lab environment
-- Sysmon Event ID 3 (network connection) is highly effective for detecting brute force patterns on Windows
-- Auditd rules must be carefully scoped to avoid log flooding while maintaining coverage of critical paths
-
-### Potential Improvements
-
-- Implement automated detection rules and alerts aligned with MITRE ATT&CK
-- Add Threat Intelligence integration to enrich logs with known malicious IPs
-- Expand monitoring to include DNS, firewall, and web server logs
-- Implement role-based access control (RBAC) in Kibana for multi-analyst environments
+**Potential Improvements:**
+- Add Logstash for custom parsing pipelines and log enrichment
+- Integrate Suricata or Zeek for network-level detection
+- Map all detection rules to MITRE ATT&CK tactics and techniques
+- Add automated response actions (e.g., host isolation via Elastic Defend)
+- Deploy in a multi-node Elasticsearch cluster for production resilience
 
 ---
 
@@ -252,9 +311,30 @@ This project demonstrated that the Elastic Stack provides a powerful, scalable, 
 
 | Member | Role | Responsibilities |
 |---|---|---|
-| **Antonio Musumeci** | Infrastructure Lead | ELK Stack installation and configuration, network setup, firewall rules, Fleet Server management |
-| **Shrestha Aashish** | Windows Endpoint Lead | Windows Agent configuration, Sysmon setup, RDP Brute Force simulation, Kibana analysis |
-| **Thapa Sujan** | Linux Endpoint Lead | Linux Agent configuration, Auditd setup, SSH Brute Force simulation, log investigation |
+| **Antonio Musumeci** | Infrastructure Lead | ELK Stack deployment, network configuration, Fleet Server management, attack simulation, detection rule creation |
+| **Shrestha Aashish** | Windows Endpoint Lead | Windows Agent configuration, RDP scenario design, Kibana analysis |
+| **Thapa Sujan** | Linux Endpoint Lead | Linux Agent configuration, SSH scenario design, log investigation |
+
+---
+
+## Repository Structure
+
+```
+elk-siem-project/
+├── README.md
+├── configs/
+│   └── (Elasticsearch and Kibana configuration files)
+├── docs/
+│   └── screenshots/
+│       ├── phase1/    (ELK Stack installation)
+│       ├── phase2/    (Fleet + Agent enrollment)
+│       ├── phase3/    (Detection rules)
+│       └── phase4/    (Attack simulation + alerts)
+├── scripts/
+│   └── hydra-attacks/
+│       └── (Attack scripts and wordlists)
+└── LICENSE
+```
 
 ---
 
@@ -262,11 +342,11 @@ This project demonstrated that the Elastic Stack provides a powerful, scalable, 
 
 - [Elastic Stack Documentation](https://www.elastic.co/guide/index.html)
 - [Elastic Security Guide](https://www.elastic.co/guide/en/security/current/index.html)
-- [Sysmon Documentation — Microsoft](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon)
-- [Auditd Documentation](https://linux.die.net/man/8/auditd)
+- [Elastic Fleet and Agent Documentation](https://www.elastic.co/guide/en/fleet/current/index.html)
 - [Hydra — THC Hydra](https://github.com/vanhauser-thc/thc-hydra)
 - [MITRE ATT&CK Framework](https://attack.mitre.org/)
 - [NIST SP 800-61 — Computer Security Incident Handling Guide](https://csrc.nist.gov/publications/detail/sp/800-61/rev-2/final)
+- [Windows Event ID 4625 — Microsoft Documentation](https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4625)
 
 ---
 
