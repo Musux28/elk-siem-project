@@ -325,6 +325,8 @@ elk-siem-project/
 ├── configs/
 │   └── (Elasticsearch and Kibana configuration files)
 ├── docs/
+│   ├── report/
+│   │   └── Final Report.docx
 │   └── screenshots/
 │       ├── phase1/    (ELK Stack installation)
 │       ├── phase2/    (Fleet + Agent enrollment)
